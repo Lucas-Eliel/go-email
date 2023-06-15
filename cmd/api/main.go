@@ -1,51 +1,39 @@
 package main
 
 import (
+	"emailn/internal/contract"
+	"emailn/internal/domain/campaign"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 )
 
 func main() {
 	r := chi.NewRouter()
 
-	r.Use(myMiddleware)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		param := r.URL.Query().Get("name")
-		if param != "" {
-			w.Write([]byte(param))
-		} else {
-			w.Write([]byte("hello world "))
+	service := campaign.Service{}
+
+	r.Post("/campaigns", func(w http.ResponseWriter, r *http.Request) {
+		var request contract.NewCompaignDto
+		render.DecodeJSON(r.Body, &request)
+		id, err := service.Create(request)
+
+		if err != nil {
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, map[string]string{"error": err.Error()})
+			return
 		}
-		println("endpoint")
-	})
 
-	r.Get("/{productName}", func(w http.ResponseWriter, r *http.Request) {
-		param := chi.URLParam(r, "productName")
-		w.Write([]byte("hello world " + param))
-	})
-
-	r.Post("/product", func(w http.ResponseWriter, r *http.Request) {
-		var product product
-		render.DecodeJSON(r.Body, &product)
-		product.Name = "Lucas"
-		render.JSON(w, r, product)
-
+		render.Status(r, http.StatusCreated)
+		render.JSON(w, r, map[string]string{"id": id})
 	})
 
 	http.ListenAndServe(":3000", r)
-}
-
-type product struct {
-	Name string
-}
-
-func myMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		println("before")
-		next.ServeHTTP(w, r)
-		println("after")
-	})
 }

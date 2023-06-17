@@ -24,13 +24,18 @@ func (r *repositoryMock) Get() ([]Campaign, error) {
 	return nil, nil
 }
 
+func (r *repositoryMock) GetById(id string) (*Campaign, error) {
+	//args := r.Called()
+	return nil, nil
+}
+
 func Test_Create_Campaign(t *testing.T) {
 	assert := assert.New(t)
 
 	repositoryMock := new(repositoryMock)
 	repositoryMock.On("Save", mock.Anything).Return(nil)
 
-	service := Service{repositoryMock}
+	service := ServiceImpl{repositoryMock}
 	newCampaign := contract.NewCompaignDto{
 		Name:    "Test Y",
 		Content: "Body hi",
@@ -46,7 +51,7 @@ func Test_Create_Campaign(t *testing.T) {
 func Test_Create_ValidateDomainError(t *testing.T) {
 	assert := assert.New(t)
 
-	service := Service{}
+	service := ServiceImpl{}
 	newCampaign := contract.NewCompaignDto{
 		Name:    "",
 		Content: "Body hi",
@@ -76,7 +81,7 @@ func Test_Create_SaveCampaign(t *testing.T) {
 		return true
 	})).Return(nil)
 
-	service := Service{repositoryMock}
+	service := ServiceImpl{repositoryMock}
 
 	service.Create(newCampaign)
 
@@ -92,7 +97,7 @@ func Test_Create_ValidateRepositorySave(t *testing.T) {
 	repositoryMock := new(repositoryMock)
 	repositoryMock.On("Save", mock.Anything).Return(errors.New("error to save database"))
 
-	service := Service{repositoryMock}
+	service := ServiceImpl{repositoryMock}
 
 	_, err := service.Create(newCampaign)
 

@@ -5,11 +5,16 @@ import (
 	"emailn/internal/internalerrors"
 )
 
-type Service struct {
+type Service interface {
+	Create(newCompaignDto contract.NewCompaignDto) (string, error)
+	GetBy(id string) (*contract.NewCompaignResponseDto, error)
+}
+
+type ServiceImpl struct {
 	Repository Repository
 }
 
-func (s *Service) Create(newCompaignDto contract.NewCompaignDto) (string, error) {
+func (s *ServiceImpl) Create(newCompaignDto contract.NewCompaignDto) (string, error) {
 
 	compaign, err := NewCampaign(newCompaignDto.Name, newCompaignDto.Content, newCompaignDto.Emails)
 
@@ -24,4 +29,19 @@ func (s *Service) Create(newCompaignDto contract.NewCompaignDto) (string, error)
 	}
 
 	return compaign.ID, nil
+}
+
+func (s *ServiceImpl) GetBy(id string) (*contract.NewCompaignResponseDto, error) {
+	campaign, err := s.Repository.GetById(id)
+
+	if err != nil {
+		return nil, internalerrors.ErrInternalError
+	}
+
+	return &contract.NewCompaignResponseDto{
+		ID:      campaign.ID,
+		Name:    campaign.Name,
+		Content: campaign.Content,
+		Status:  campaign.Status,
+	}, nil
 }

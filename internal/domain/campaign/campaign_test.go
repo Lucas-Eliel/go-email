@@ -123,3 +123,16 @@ func Test_NewCampaign_CreatedOnIsNotNil(t *testing.T) {
 	//Assert
 	assert.NotNil(t, campaign.CreatedOn)
 }
+
+func Test_NewCampaign_MustStatusStartWithPending(t *testing.T) {
+	//Arrange
+	name := "Campaign X"
+	content := "Body hi"
+	contacts := []string{"email1@e.com", "email2@e.com"}
+
+	//Act
+	campaign, _ := NewCampaign(name, content, contacts)
+
+	//Assert
+	assert.Equal(t, Pending, campaign.Status)
+}

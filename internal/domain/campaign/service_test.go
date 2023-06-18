@@ -25,8 +25,11 @@ func (r *repositoryMock) Get() ([]Campaign, error) {
 }
 
 func (r *repositoryMock) GetById(id string) (*Campaign, error) {
-	//args := r.Called()
-	return nil, nil
+	args := r.Called(id)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*Campaign), nil
 }
 
 func Test_Create_Campaign(t *testing.T) {
@@ -102,4 +105,47 @@ func Test_Create_ValidateRepositorySave(t *testing.T) {
 	_, err := service.Create(newCampaign)
 
 	assert.True(t, errors.Is(internalerrors.ErrInternalError, err))
+}
+
+func Test_GetById_ReturnCampaign(t *testing.T) {
+	newCampaign := contract.NewCompaignDto{
+		Name:    "Test Y",
+		Content: "Body hi",
+		Emails:  []string{"test@example.com"},
+	}
+
+	campaign, _ := NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
+
+	repositoryMock := new(repositoryMock)
+	repositoryMock.On("GetById", mock.MatchedBy(func(id string) bool {
+		return id == campaign.ID
+	})).Return(campaign, nil)
+
+	service := ServiceImpl{repositoryMock}
+
+	campaignReturned, _ := service.GetById(campaign.ID)
+
+	assert.Equal(t, campaign.ID, campaignReturned.ID)
+	assert.Equal(t, campaign.Name, campaignReturned.Name)
+	assert.Equal(t, campaign.Content, campaignReturned.Content)
+	assert.Equal(t, campaign.Status, campaignReturned.Status)
+}
+
+func Test_GetById_ReturnErrorWhenSomethingWrongExist(t *testing.T) {
+	newCampaign := contract.NewCompaignDto{
+		Name:    "Test Y",
+		Content: "Body hi",
+		Emails:  []string{"test@example.com"},
+	}
+
+	campaign, _ := NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
+
+	repositoryMock := new(repositoryMock)
+	repositoryMock.On("GetById", mock.Anything).Return(nil, errors.New("Something wrong"))
+
+	service := ServiceImpl{repositoryMock}
+
+	_, err := service.GetById(campaign.ID)
+
+	assert.Equal(t, internalerrors.ErrInternalError.Error(), err.Error())
 }

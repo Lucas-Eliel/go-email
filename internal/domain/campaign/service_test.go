@@ -32,6 +32,16 @@ func (r *repositoryMock) GetById(id string) (*Campaign, error) {
 	return args.Get(0).(*Campaign), nil
 }
 
+func (r *repositoryMock) Update(campaign *Campaign) error {
+	args := r.Called(campaign)
+	return args.Error(0)
+}
+
+func (r *repositoryMock) Delete(campaign *Campaign) error {
+	args := r.Called(campaign)
+	return args.Error(0)
+}
+
 func Test_Create_Campaign(t *testing.T) {
 	assert := assert.New(t)
 

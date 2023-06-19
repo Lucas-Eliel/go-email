@@ -22,3 +22,11 @@ func (s *CompaignServiceMock) GetById(id string) (*contract.NewCompaignResponseD
 	}
 	return args.Get(0).(*contract.NewCompaignResponseDto), nil
 }
+
+func (s *CompaignServiceMock) Cancel(id string) error {
+	return nil
+}
+
+func (s *CompaignServiceMock) Delete(id string) error {
+	return nil
+}

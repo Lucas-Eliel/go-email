@@ -9,7 +9,6 @@ import (
 type Service interface {
 	Create(newCompaignDto contract.NewCompaignDto) (string, error)
 	GetById(id string) (*contract.NewCompaignResponseDto, error)
-	Cancel(id string) error
 	Delete(id string) error
 }
 
@@ -38,7 +37,7 @@ func (s *ServiceImpl) GetById(id string) (*contract.NewCompaignResponseDto, erro
 	campaign, err := s.Repository.GetById(id)
 
 	if err != nil {
-		return nil, internalerrors.ErrInternalError
+		return nil, internalerrors.ProcessErrorToReturn(err)
 	}
 
 	return &contract.NewCompaignResponseDto{
@@ -50,33 +49,11 @@ func (s *ServiceImpl) GetById(id string) (*contract.NewCompaignResponseDto, erro
 	}, nil
 }
 
-func (s *ServiceImpl) Cancel(id string) error {
-	campaign, err := s.Repository.GetById(id)
-
-	if err != nil {
-		return internalerrors.ErrInternalError
-	}
-
-	if campaign.Status != Pending {
-		return errors.New("Campaign status invalid")
-	}
-
-	campaign.Cancel()
-
-	err = s.Repository.Update(campaign)
-
-	if err != nil {
-		return internalerrors.ErrInternalError
-	}
-
-	return nil
-}
-
 func (s *ServiceImpl) Delete(id string) error {
 	campaign, err := s.Repository.GetById(id)
 
 	if err != nil {
-		return internalerrors.ErrInternalError
+		return internalerrors.ProcessErrorToReturn(err)
 	}
 
 	if campaign.Status != Pending {

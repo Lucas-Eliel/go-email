@@ -1,54 +1,26 @@
-package campaign
+package campaign_test
 
 import (
 	"emailn/internal/contract"
+	"emailn/internal/domain/campaign"
 	"emailn/internal/internalerrors"
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
+
+	internalMock "emailn/internal/test/internal-mock"
 )
-
-type repositoryMock struct {
-	mock.Mock
-}
-
-func (r *repositoryMock) Save(campaign *Campaign) error {
-	args := r.Called(campaign)
-	return args.Error(0)
-}
-
-func (r *repositoryMock) Get() ([]Campaign, error) {
-	//args := r.Called()
-	return nil, nil
-}
-
-func (r *repositoryMock) GetById(id string) (*Campaign, error) {
-	args := r.Called(id)
-	if args.Error(1) != nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*Campaign), nil
-}
-
-func (r *repositoryMock) Update(campaign *Campaign) error {
-	args := r.Called(campaign)
-	return args.Error(0)
-}
-
-func (r *repositoryMock) Delete(campaign *Campaign) error {
-	args := r.Called(campaign)
-	return args.Error(0)
-}
 
 func Test_Create_Campaign(t *testing.T) {
 	assert := assert.New(t)
 
-	repositoryMock := new(repositoryMock)
+	repositoryMock := new(internalMock.CompaignRepositoryMock)
 	repositoryMock.On("Save", mock.Anything).Return(nil)
 
-	service := ServiceImpl{repositoryMock}
+	service := campaign.ServiceImpl{repositoryMock}
 	newCampaign := contract.NewCompaignDto{
 		Name:    "Test Y",
 		Content: "Body hi",
@@ -64,7 +36,7 @@ func Test_Create_Campaign(t *testing.T) {
 func Test_Create_ValidateDomainError(t *testing.T) {
 	assert := assert.New(t)
 
-	service := ServiceImpl{}
+	service := campaign.ServiceImpl{}
 	newCampaign := contract.NewCompaignDto{
 		Name:    "",
 		Content: "Body hi",
@@ -82,8 +54,8 @@ func Test_Create_SaveCampaign(t *testing.T) {
 		Content: "Body hi",
 		Emails:  []string{"test@example.com"},
 	}
-	repositoryMock := new(repositoryMock)
-	repositoryMock.On("Save", mock.MatchedBy(func(campaign *Campaign) bool {
+	repositoryMock := new(internalMock.CompaignRepositoryMock)
+	repositoryMock.On("Save", mock.MatchedBy(func(campaign *campaign.Campaign) bool {
 		if campaign.Name != newCampaign.Name {
 			return false
 		} else if campaign.Content != newCampaign.Content {
@@ -94,7 +66,7 @@ func Test_Create_SaveCampaign(t *testing.T) {
 		return true
 	})).Return(nil)
 
-	service := ServiceImpl{repositoryMock}
+	service := campaign.ServiceImpl{repositoryMock}
 
 	service.Create(newCampaign)
 
@@ -107,10 +79,10 @@ func Test_Create_ValidateRepositorySave(t *testing.T) {
 		Content: "Body hi",
 		Emails:  []string{"test@example.com"},
 	}
-	repositoryMock := new(repositoryMock)
+	repositoryMock := new(internalMock.CompaignRepositoryMock)
 	repositoryMock.On("Save", mock.Anything).Return(errors.New("error to save database"))
 
-	service := ServiceImpl{repositoryMock}
+	service := campaign.ServiceImpl{repositoryMock}
 
 	_, err := service.Create(newCampaign)
 
@@ -124,21 +96,21 @@ func Test_GetById_ReturnCampaign(t *testing.T) {
 		Emails:  []string{"test@example.com"},
 	}
 
-	campaign, _ := NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
+	camp, _ := campaign.NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
 
-	repositoryMock := new(repositoryMock)
+	repositoryMock := new(internalMock.CompaignRepositoryMock)
 	repositoryMock.On("GetById", mock.MatchedBy(func(id string) bool {
-		return id == campaign.ID
-	})).Return(campaign, nil)
+		return id == camp.ID
+	})).Return(camp, nil)
 
-	service := ServiceImpl{repositoryMock}
+	service := campaign.ServiceImpl{repositoryMock}
 
-	campaignReturned, _ := service.GetById(campaign.ID)
+	campaignReturned, _ := service.GetById(camp.ID)
 
-	assert.Equal(t, campaign.ID, campaignReturned.ID)
-	assert.Equal(t, campaign.Name, campaignReturned.Name)
-	assert.Equal(t, campaign.Content, campaignReturned.Content)
-	assert.Equal(t, campaign.Status, campaignReturned.Status)
+	assert.Equal(t, camp.ID, campaignReturned.ID)
+	assert.Equal(t, camp.Name, campaignReturned.Name)
+	assert.Equal(t, camp.Content, campaignReturned.Content)
+	assert.Equal(t, camp.Status, campaignReturned.Status)
 }
 
 func Test_GetById_ReturnErrorWhenSomethingWrongExist(t *testing.T) {
@@ -148,14 +120,33 @@ func Test_GetById_ReturnErrorWhenSomethingWrongExist(t *testing.T) {
 		Emails:  []string{"test@example.com"},
 	}
 
-	campaign, _ := NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
+	camp, _ := campaign.NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
 
-	repositoryMock := new(repositoryMock)
+	repositoryMock := new(internalMock.CompaignRepositoryMock)
 	repositoryMock.On("GetById", mock.Anything).Return(nil, errors.New("Something wrong"))
 
-	service := ServiceImpl{repositoryMock}
+	service := campaign.ServiceImpl{repositoryMock}
 
-	_, err := service.GetById(campaign.ID)
+	_, err := service.GetById(camp.ID)
 
 	assert.Equal(t, internalerrors.ErrInternalError.Error(), err.Error())
+}
+
+func Test_Delete_ReturnRecordNotFount_when_campaign_does_not_exist(t *testing.T) {
+	newCampaign := contract.NewCompaignDto{
+		Name:    "Test Y",
+		Content: "Body hi",
+		Emails:  []string{"test@example.com"},
+	}
+
+	camp, _ := campaign.NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
+
+	repositoryMock := new(internalMock.CompaignRepositoryMock)
+	repositoryMock.On("GetById", mock.Anything).Return(nil, gorm.ErrRecordNotFound)
+
+	service := campaign.ServiceImpl{repositoryMock}
+
+	err := service.Delete(camp.ID)
+
+	assert.Equal(t, gorm.ErrRecordNotFound.Error(), err.Error())
 }

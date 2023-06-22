@@ -6,4 +6,5 @@ type NewCompaignResponseDto struct {
 	Content              string
 	Status               string
 	AmountOfEmailsToSend int
+	CreateBy             string
 }

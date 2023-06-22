@@ -22,9 +22,10 @@ func Test_Create_Campaign(t *testing.T) {
 
 	service := campaign.ServiceImpl{repositoryMock}
 	newCampaign := contract.NewCompaignDto{
-		Name:    "Test Y",
-		Content: "Body hi",
-		Emails:  []string{"test@example.com"},
+		Name:     "Test Y",
+		Content:  "Body hi",
+		Emails:   []string{"test@example.com"},
+		CreateBy: "test@example.com",
 	}
 
 	id, err := service.Create(newCampaign)
@@ -38,9 +39,10 @@ func Test_Create_ValidateDomainError(t *testing.T) {
 
 	service := campaign.ServiceImpl{}
 	newCampaign := contract.NewCompaignDto{
-		Name:    "",
-		Content: "Body hi",
-		Emails:  []string{"test@example.com"},
+		Name:     "",
+		Content:  "Body hi",
+		Emails:   []string{"test@example.com"},
+		CreateBy: "test@example.com",
 	}
 
 	_, err := service.Create(newCampaign)
@@ -50,9 +52,10 @@ func Test_Create_ValidateDomainError(t *testing.T) {
 
 func Test_Create_SaveCampaign(t *testing.T) {
 	newCampaign := contract.NewCompaignDto{
-		Name:    "Test Y",
-		Content: "Body hi",
-		Emails:  []string{"test@example.com"},
+		Name:     "Test Y",
+		Content:  "Body hi",
+		Emails:   []string{"test@example.com"},
+		CreateBy: "test@example.com",
 	}
 	repositoryMock := new(internalMock.CompaignRepositoryMock)
 	repositoryMock.On("Save", mock.MatchedBy(func(campaign *campaign.Campaign) bool {
@@ -75,9 +78,10 @@ func Test_Create_SaveCampaign(t *testing.T) {
 
 func Test_Create_ValidateRepositorySave(t *testing.T) {
 	newCampaign := contract.NewCompaignDto{
-		Name:    "Test Y",
-		Content: "Body hi",
-		Emails:  []string{"test@example.com"},
+		Name:     "Test Y",
+		Content:  "Body hi",
+		Emails:   []string{"test@example.com"},
+		CreateBy: "test@example.com",
 	}
 	repositoryMock := new(internalMock.CompaignRepositoryMock)
 	repositoryMock.On("Save", mock.Anything).Return(errors.New("error to save database"))
@@ -91,12 +95,13 @@ func Test_Create_ValidateRepositorySave(t *testing.T) {
 
 func Test_GetById_ReturnCampaign(t *testing.T) {
 	newCampaign := contract.NewCompaignDto{
-		Name:    "Test Y",
-		Content: "Body hi",
-		Emails:  []string{"test@example.com"},
+		Name:     "Test Y",
+		Content:  "Body hi",
+		Emails:   []string{"test@example.com"},
+		CreateBy: "test@example.com",
 	}
 
-	camp, _ := campaign.NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
+	camp, _ := campaign.NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails, newCampaign.CreateBy)
 
 	repositoryMock := new(internalMock.CompaignRepositoryMock)
 	repositoryMock.On("GetById", mock.MatchedBy(func(id string) bool {
@@ -115,12 +120,13 @@ func Test_GetById_ReturnCampaign(t *testing.T) {
 
 func Test_GetById_ReturnErrorWhenSomethingWrongExist(t *testing.T) {
 	newCampaign := contract.NewCompaignDto{
-		Name:    "Test Y",
-		Content: "Body hi",
-		Emails:  []string{"test@example.com"},
+		Name:     "Test Y",
+		Content:  "Body hi",
+		Emails:   []string{"test@example.com"},
+		CreateBy: "test@example.com",
 	}
 
-	camp, _ := campaign.NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
+	camp, _ := campaign.NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails, newCampaign.CreateBy)
 
 	repositoryMock := new(internalMock.CompaignRepositoryMock)
 	repositoryMock.On("GetById", mock.Anything).Return(nil, errors.New("Something wrong"))
@@ -134,12 +140,13 @@ func Test_GetById_ReturnErrorWhenSomethingWrongExist(t *testing.T) {
 
 func Test_Delete_ReturnRecordNotFount_when_campaign_does_not_exist(t *testing.T) {
 	newCampaign := contract.NewCompaignDto{
-		Name:    "Test Y",
-		Content: "Body hi",
-		Emails:  []string{"test@example.com"},
+		Name:     "Test Y",
+		Content:  "Body hi",
+		Emails:   []string{"test@example.com"},
+		CreateBy: "test@example.com",
 	}
 
-	camp, _ := campaign.NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails)
+	camp, _ := campaign.NewCampaign(newCampaign.Name, newCampaign.Content, newCampaign.Emails, newCampaign.CreateBy)
 
 	repositoryMock := new(internalMock.CompaignRepositoryMock)
 	repositoryMock.On("GetById", mock.Anything).Return(nil, gorm.ErrRecordNotFound)

@@ -18,7 +18,7 @@ type ServiceImpl struct {
 
 func (s *ServiceImpl) Create(newCompaignDto contract.NewCompaignDto) (string, error) {
 
-	compaign, err := NewCampaign(newCompaignDto.Name, newCompaignDto.Content, newCompaignDto.Emails)
+	compaign, err := NewCampaign(newCompaignDto.Name, newCompaignDto.Content, newCompaignDto.Emails, newCompaignDto.CreateBy)
 
 	if err != nil {
 		return "", err
